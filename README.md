@@ -100,6 +100,16 @@ flowchart LR
 | Cookie-based session on the frontend, Bearer JWT on the API | The browser never sees the token directly; a `DelegatingHandler` reads it from the authenticated cookie principal and attaches it to outgoing API calls. |
 | FIFO lots instead of a single average-cost balance | Needed for correct realized P&L per sale — an average-cost shortcut can't answer "how much did *this* sale actually make." |
 
+## Security
+
+- **PBKDF2** password hashing (100,000 iterations, per-user random salt, constant-time
+  comparison) — see `Infrastructure/Security/PasswordHasher.cs`.
+- **JWT Bearer** authentication with role claims (`Investor` / `Admin`), validated on every API
+  request; `[Authorize(Roles = "Admin")]` gates price updates and the admin accounts listing.
+- **Fixed-window rate limiting** on `/api/auth/register` and `/api/auth/login` (5 requests/minute
+  per client) to blunt credential-stuffing and brute-force attempts.
+- **CORS** policy scoped to the Razor Pages frontend's own origin.
+
 ## Endpoints
 
 | Method | Route | Auth | Description |

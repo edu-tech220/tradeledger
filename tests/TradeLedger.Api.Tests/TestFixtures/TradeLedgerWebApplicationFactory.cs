@@ -16,12 +16,23 @@ namespace TradeLedger.Api.Tests.TestFixtures;
 /// </summary>
 public class TradeLedgerWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly SqliteConnection _connection;
+    // EF Core resolves IDbContextFactory as a singleton and the order-matching retry loop relies
+    // on it handing out a brand new connection per attempt, so the DbContext must be configured
+    // with a connection STRING, not one shared SqliteConnection instance - a single ADO.NET
+    // connection object cannot safely run concurrent commands from multiple threads/contexts.
+    // This field only exists to keep *a* connection open so the in-memory database itself
+    // survives between those short-lived connections; it is never handed to the DbContext.
+    private readonly SqliteConnection _keepAliveConnection;
+    private readonly string _connectionString;
 
     public TradeLedgerWebApplicationFactory()
     {
-        _connection = new SqliteConnection($"DataSource=test-{Guid.NewGuid()};Mode=Memory;Cache=Shared");
-        _connection.Open();
+        // Default Timeout makes SQLite wait (up to 30s) for another connection's write lock to
+        // free instead of throwing SQLITE_BUSY immediately - needed because SQLite only allows
+        // one writer at a time even across separate connections to the same shared-cache database.
+        _connectionString = $"DataSource=test-{Guid.NewGuid()};Mode=Memory;Cache=Shared;Default Timeout=30";
+        _keepAliveConnection = new SqliteConnection(_connectionString);
+        _keepAliveConnection.Open();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -31,7 +42,7 @@ public class TradeLedgerWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<TradeLedgerDbContext>>();
             services.RemoveAll<IDbContextFactory<TradeLedgerDbContext>>();
 
-            services.AddDbContextFactory<TradeLedgerDbContext>(options => options.UseSqlite(_connection));
+            services.AddDbContextFactory<TradeLedgerDbContext>(options => options.UseSqlite(_connectionString));
         });
     }
 
@@ -39,6 +50,6 @@ public class TradeLedgerWebApplicationFactory : WebApplicationFactory<Program>
     {
         base.Dispose(disposing);
         if (disposing)
-            _connection.Dispose();
+            _keepAliveConnection.Dispose();
     }
 }

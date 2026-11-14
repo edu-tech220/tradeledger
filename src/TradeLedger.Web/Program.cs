@@ -1,7 +1,29 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using TradeLedger.Web.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<BearerTokenHandler>();
+builder.Services.AddHttpClient<TradeLedgerApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Api:BaseUrl"]
+        ?? throw new InvalidOperationException("Api:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl);
+}).AddHttpMessageHandler<BearerTokenHandler>();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
+        options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -18,6 +40,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();

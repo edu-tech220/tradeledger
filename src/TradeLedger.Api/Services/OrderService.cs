@@ -198,7 +198,7 @@ public class OrderService(IDbContextFactory<TradeLedgerDbContext> dbFactory) : I
         {
             var cost = fillPrice * order.Quantity;
             if (cost > account.CashBalance)
-                return FillOutcome.InsufficientFunds;
+                return await RejectIfMarketOrderAsync(db, order, "Insufficient funds at execution time.", FillOutcome.InsufficientFunds, ct);
 
             account.CashBalance -= cost;
             account.Version++;
@@ -234,7 +234,7 @@ public class OrderService(IDbContextFactory<TradeLedgerDbContext> dbFactory) : I
                 .ToListAsync(ct);
 
             if (lots.Sum(l => l.RemainingQuantity) < order.Quantity)
-                return FillOutcome.InsufficientHoldings;
+                return await RejectIfMarketOrderAsync(db, order, "Insufficient holdings at execution time.", FillOutcome.InsufficientHoldings, ct);
 
             var remainingToSell = order.Quantity;
             var costBasis = 0m;
@@ -273,5 +273,23 @@ public class OrderService(IDbContextFactory<TradeLedgerDbContext> dbFactory) : I
 
         await db.SaveChangesAsync(ct);
         return FillOutcome.Filled;
+    }
+
+    /// <summary>
+    /// A Limit order that can't fill right now just stays Pending - the market may still move
+    /// in its favor later. A Market order has no "later": if a concurrent request already spent
+    /// the funds/shares it was counting on, it must be Rejected now instead of sitting Pending
+    /// forever, since nothing ever re-attempts a Market order after this call returns.
+    /// </summary>
+    private static async Task<FillOutcome> RejectIfMarketOrderAsync(
+        TradeLedgerDbContext db, Order order, string reason, FillOutcome outcome, CancellationToken ct)
+    {
+        if (order.Type != OrderType.Market)
+            return outcome;
+
+        order.Status = OrderStatus.Rejected;
+        order.RejectionReason = reason;
+        await db.SaveChangesAsync(ct);
+        return outcome;
     }
 }

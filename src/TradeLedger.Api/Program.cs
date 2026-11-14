@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TradeLedger.Api.Data;
+using TradeLedger.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +11,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<TradeLedgerDbContext>(options =>
+// A factory (rather than a single scoped context) lets the order-matching retry loop open a
+// brand new DbContext per attempt, so a concurrency conflict always retries against a fresh
+// snapshot instead of a half-mutated, already-tracked one.
+builder.Services.AddDbContextFactory<TradeLedgerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPortfolioService, PortfolioService>();
+builder.Services.AddHostedService<OrderMatchingBackgroundService>();
 
 var app = builder.Build();
 

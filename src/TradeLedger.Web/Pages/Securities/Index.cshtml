@@ -1,0 +1,48 @@
+@page
+@model TradeLedger.Web.Pages.Securities.IndexModel
+@{
+    ViewData["Title"] = "Securities";
+}
+
+<h1>Securities</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Name</th>
+            <th class="text-end">Current price</th>
+            <th>Updated</th>
+            @if (User.IsInRole("Admin"))
+            {
+                <th>Admin</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var security in Model.Securities)
+        {
+            <tr>
+                <td>@security.Symbol</td>
+                <td>@security.Name</td>
+                <td class="text-end">@security.CurrentPrice.ToString("C")</td>
+                <td>@security.UpdatedAt.ToLocalTime().ToString("g")</td>
+                @if (User.IsInRole("Admin"))
+                {
+                    <td>
+                        <form method="post" class="d-flex gap-2">
+                            <input type="hidden" name="Symbol" value="@security.Symbol" />
+                            <input type="number" step="0.01" min="0.01" name="NewPrice" class="form-control form-control-sm" style="width: 8rem" required />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Update price</button>
+                        </form>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <a class="btn btn-primary" asp-page="/Orders/Place">Place an order</a>
+}

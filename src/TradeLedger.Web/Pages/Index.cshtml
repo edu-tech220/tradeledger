@@ -7,4 +7,14 @@
 <div class="text-center">
     <h1 class="display-4">TradeLedger</h1>
     <p>Personal brokerage order execution and portfolio ledger.</p>
+    <p>Buy and sell simulated securities with real buying-power checks, FIFO cost-basis lots and realized P&amp;L.</p>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a class="btn btn-primary" asp-page="/Dashboard">Go to dashboard</a>
+    }
+    else
+    {
+        <a class="btn btn-primary" asp-page="/Account/Login">Log in</a>
+        <a class="btn btn-outline-secondary" asp-page="/Account/Register">Register</a>
+    }
 </div>

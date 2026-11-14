@@ -1,0 +1,28 @@
+@page
+@model TradeLedger.Web.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h1>Create an account</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" type="password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+                <div class="form-text">At least 8 characters.</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Create account</button>
+        </form>
+        <p class="mt-3 text-muted">New investor accounts start with $10,000.00 in cash.</p>
+    </div>
+</div>

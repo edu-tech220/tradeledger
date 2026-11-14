@@ -1,0 +1,80 @@
+@page
+@model TradeLedger.Web.Pages.Orders.IndexModel
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<h1>Orders</h1>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+    <div class="col-auto">
+        <label class="form-label" for="status">Status</label>
+        <select id="status" name="status" class="form-select" asp-items="Model.StatusOptions">
+            <option value="">All</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+    </div>
+    <div class="col-auto ms-auto">
+        <a class="btn btn-primary" asp-page="/Orders/Place">Place an order</a>
+    </div>
+</form>
+
+@if (Model.Orders.Items.Count == 0)
+{
+    <p class="text-muted">No orders yet.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Type</th>
+                <th class="text-end">Quantity</th>
+                <th class="text-end">Limit price</th>
+                <th>Status</th>
+                <th class="text-end">Filled price</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model.Orders.Items)
+            {
+                <tr>
+                    <td>@order.Symbol</td>
+                    <td>@order.Side</td>
+                    <td>@order.Type</td>
+                    <td class="text-end">@order.Quantity</td>
+                    <td class="text-end">@(order.LimitPrice?.ToString("C") ?? "-")</td>
+                    <td>@order.Status</td>
+                    <td class="text-end">@(order.FilledPrice?.ToString("C") ?? "-")</td>
+                    <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>
+                        @if (order.Status == "Pending")
+                        {
+                            <form method="post" asp-page-handler="Cancel">
+                                <input type="hidden" name="orderId" value="@order.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            @for (var p = 1; p <= Model.Orders.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.Orders.Page ? "active" : "")">
+                    <a class="page-link" asp-page="/Orders/Index" asp-route-page="@p" asp-route-status="@Model.Status">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

@@ -61,6 +61,7 @@ public class TradeLedgerDbContext(DbContextOptions<TradeLedgerDbContext> options
         modelBuilder.Entity<Lot>(entity =>
         {
             entity.Property(l => l.UnitCost).HasColumnType("decimal(18,4)");
+            entity.Property(l => l.Version).IsConcurrencyToken();
 
             entity.HasOne(l => l.Account)
                 .WithMany(a => a.Lots)

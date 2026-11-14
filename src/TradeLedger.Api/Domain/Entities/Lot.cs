@@ -11,6 +11,9 @@ public class Lot
     public decimal UnitCost { get; set; }
     public DateTime PurchasedAt { get; set; }
 
+    // Application-managed concurrency token, see Account.Version.
+    public uint Version { get; set; }
+
     public Account Account { get; set; } = null!;
     public Security Security { get; set; } = null!;
     public Order BuyOrder { get; set; } = null!;

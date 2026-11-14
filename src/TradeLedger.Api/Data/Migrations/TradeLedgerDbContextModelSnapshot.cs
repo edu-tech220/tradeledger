@@ -112,6 +112,10 @@ namespace TradeLedger.Api.Data.Migrations
                     b.Property<decimal>("UnitCost")
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BuyOrderId");

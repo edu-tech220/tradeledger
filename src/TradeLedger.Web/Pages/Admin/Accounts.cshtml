@@ -1,0 +1,40 @@
+@page
+@model TradeLedger.Web.Pages.Admin.AccountsModel
+@{
+    ViewData["Title"] = "Admin - Accounts";
+}
+
+<h1>All accounts</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Account</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th class="text-end">Cash balance</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var account in Model.Accounts.Items)
+        {
+            <tr>
+                <td>@account.AccountId</td>
+                <td>@account.Username</td>
+                <td>@account.Role</td>
+                <td class="text-end">@account.CashBalance.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<nav>
+    <ul class="pagination">
+        @for (var p = 1; p <= Model.Accounts.TotalPages; p++)
+        {
+            <li class="page-item @(p == Model.Accounts.Page ? "active" : "")">
+                <a class="page-link" asp-page="/Admin/Accounts" asp-route-page="@p">@p</a>
+            </li>
+        }
+    </ul>
+</nav>
